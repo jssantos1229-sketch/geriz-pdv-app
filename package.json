@@ -1,8 +1,8 @@
 {
   "name": "geriz-pdv-desktop",
-  "productName": "GERIZ PDV",
-  "version": "1.1.1",
-  "description": "GERIZ PDV para Windows: abre a Frente de Caixa e imprime o cupom direto na impressora térmica.",
+  "productName": "GERIZ Frente de Caixa",
+  "version": "1.2.0",
+  "description": "GERIZ Frente de Caixa para Windows: abre só o caixa e imprime o cupom direto na impressora térmica.",
   "author": "GERIZ",
   "private": true,
   "main": "main.cjs",
@@ -17,8 +17,8 @@
   },
   "build": {
     "appId": "br.com.geriz.pdv",
-    "productName": "GERIZ PDV",
-    "artifactName": "GERIZ-PDV-Setup.${ext}",
+    "productName": "GERIZ Frente de Caixa",
+    "artifactName": "GERIZ-Frente-de-Caixa-Setup.${ext}",
     "directories": {
       "output": "dist"
     },
@@ -41,7 +41,7 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "GERIZ Frente de Caixa",
-      "uninstallDisplayName": "GERIZ PDV",
+      "uninstallDisplayName": "GERIZ Frente de Caixa",
       "runAfterFinish": true
     },
     "publish": [

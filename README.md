@@ -8,7 +8,7 @@ Aplicativo **GERIZ Frente de Caixa** (GERIZ PDV) (uma solução GERIZ, desenvolv
 
 ## Baixar
 
-**[GERIZ-PDV-Setup.exe](https://github.com/jssantos1229-sketch/geriz-pdv-app/releases/latest/download/GERIZ-PDV-Setup.exe)**
+**[GERIZ-Frente-de-Caixa-Setup.exe](https://github.com/jssantos1229-sketch/geriz-pdv-app/releases/latest/download/GERIZ-Frente-de-Caixa-Setup.exe)**
 
 Na primeira instalação o Windows pode avisar "O Windows protegeu o computador":
 clique em **Mais informações → Executar assim mesmo**.

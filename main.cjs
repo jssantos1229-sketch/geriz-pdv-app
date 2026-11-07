@@ -26,6 +26,8 @@ const ENDERECOS = [
 const HOSTS_PERMITIDOS = new Set(ENDERECOS.map((e) => new URL(e.url).host).concat(["www.geriz.com.br"]));
 
 process.env.GERIZ_PDV_VERSAO = app.getVersion();
+// Mesmo lugar de dados de antes da troca de nome (impressora escolhida e login continuam).
+app.setPath("userData", path.join(app.getPath("appData"), "GERIZ PDV"));
 
 // ---------- Configuração deste computador ----------
 const arquivoConfig = () => path.join(app.getPath("userData"), "config.json");
@@ -205,7 +207,7 @@ function cupomDeTesteEscPos() {
     cortar: true,
     abrirGaveta: false,
     linhas: [
-      { texto: "GERIZ PDV", alinhar: "centro", negrito: true, tamanho: "grande" },
+      { texto: "GERIZ Frente de Caixa", alinhar: "centro", negrito: true, tamanho: "grande" },
       { texto: "Teste de impressão térmica", alinhar: "centro" },
       { separador: true },
       { texto: `Impressora: ${config.impressora || "padrão do Windows"}` },
@@ -264,7 +266,7 @@ async function montarMenu() {
         const r = termica
           ? await enviarCru(await impressoraEfetiva(), montarEscPos(cupomDeTesteEscPos()), app.getPath("userData"))
           : await imprimirHtml(cupomDeTeste());
-        if (!r.ok) dialog.showErrorBox("GERIZ PDV", `Não foi possível imprimir o teste: ${r.erro}`);
+        if (!r.ok) dialog.showErrorBox("GERIZ Frente de Caixa", `Não foi possível imprimir o teste: ${r.erro}`);
       },
     },
     { type: "separator" },
@@ -297,14 +299,14 @@ async function montarMenu() {
       label: "Abrir a gaveta agora",
       click: async () => {
         const r = await enviarCru(await impressoraEfetiva(), soGaveta(), app.getPath("userData"));
-        if (!r.ok) dialog.showErrorBox("GERIZ PDV", `Não foi possível abrir a gaveta: ${r.erro}`);
+        if (!r.ok) dialog.showErrorBox("GERIZ Frente de Caixa", `Não foi possível abrir a gaveta: ${r.erro}`);
       },
     },
   ];
 
   const molde = [
     {
-      label: "GERIZ PDV",
+      label: "GERIZ Frente de Caixa",
       submenu: [
         { label: "Recarregar", accelerator: "Ctrl+R", click: () => janela && janela.webContents.reload() },
         {
@@ -337,10 +339,10 @@ async function montarMenu() {
               .checkForUpdates()
               .then((r) => {
                 if (!r || !r.updateInfo || r.updateInfo.version === app.getVersion()) {
-                  void dialog.showMessageBox({ type: "info", title: "GERIZ PDV", message: `Você já está na versão mais nova (${app.getVersion()}).` });
+                  void dialog.showMessageBox({ type: "info", title: "GERIZ Frente de Caixa", message: `Você já está na versão mais nova (${app.getVersion()}).` });
                 }
               })
-              .catch(() => dialog.showErrorBox("GERIZ PDV", "Não foi possível procurar atualização agora."));
+              .catch(() => dialog.showErrorBox("GERIZ Frente de Caixa", "Não foi possível procurar atualização agora."));
           },
         },
         { type: "separator" },
@@ -370,8 +372,8 @@ async function montarMenu() {
           click: () =>
             dialog.showMessageBox({
               type: "info",
-              title: "GERIZ PDV",
-              message: `GERIZ PDV ${app.getVersion()}`,
+              title: "GERIZ Frente de Caixa",
+              message: `GERIZ Frente de Caixa ${app.getVersion()}`,
               detail: `Endereço: ${enderecoAtual().rotulo}\nImpressora: ${config.impressora || "padrão do Windows"}`,
             }),
         },
@@ -392,8 +394,8 @@ function iniciarAtualizacoes() {
   autoUpdater.on("update-downloaded", async (info) => {
     const r = await dialog.showMessageBox({
       type: "info",
-      title: "GERIZ PDV",
-      message: `Versão nova do GERIZ PDV pronta (${info.version}).`,
+      title: "GERIZ Frente de Caixa",
+      message: `Versão nova do GERIZ Frente de Caixa pronta (${info.version}).`,
       detail: "Reiniciar agora para atualizar? Se preferir, ela entra sozinha da próxima vez que o aplicativo abrir.",
       buttons: ["Reiniciar agora", "Depois"],
       defaultId: 1,
