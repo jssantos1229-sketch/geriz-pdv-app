@@ -1,6 +1,8 @@
-// GERIZ PDV para Windows.
-// Abre a Frente de Caixa do GERIZ (o mesmo site, mesmo login e mesmos dados)
-// e imprime o cupom DIRETO na impressora escolhida, sem a janela "Imprimir".
+// Aplicativos do GERIZ para Windows (o mesmo código gera os dois):
+// - "GERIZ Frente de Caixa" (modo "caixa"): abre só o caixa, em tela cheia.
+// - "GERIZ PDV" (modo "painel"): abre a entrada do estabelecimento e o
+//   Painel do Administrador.
+// Os dois imprimem DIRETO na impressora escolhida, sem a janela "Imprimir".
 // Não guarda chave nenhuma: é só uma janela do site com a impressão liberada.
 const { app, BrowserWindow, Menu, ipcMain, shell, dialog } = require("electron");
 const fs = require("node:fs");
@@ -18,16 +20,29 @@ try {
   autoUpdater = null;
 }
 
+// Qual dos dois aplicativos é este (vem do package.json do instalador).
+let MODO = "caixa";
+try {
+  MODO = require("./package.json").gerizModo === "painel" ? "painel" : "caixa";
+} catch {
+  MODO = "caixa";
+}
+const PAINEL = MODO === "painel";
+const NOME = PAINEL ? "GERIZ PDV" : "GERIZ Frente de Caixa";
+const CAMINHO = PAINEL ? "/pdv" : "/pdv/caixa";
+
 const ENDERECOS = [
-  { id: "homologacao", rotulo: "Homologação do PDV (testes)", url: "https://homologacao-pdv-geriz-delivery.jssantos1229.workers.dev/pdv/caixa" },
-  { id: "geriz", rotulo: "Site real (geriz.com.br)", url: "https://geriz.com.br/pdv/caixa" },
-  { id: "delivery", rotulo: "Site real (delivery.geriz.com.br)", url: "https://delivery.geriz.com.br/pdv/caixa" },
+  { id: "homologacao", rotulo: "Homologação do PDV (testes)", url: `https://homologacao-pdv-geriz-delivery.jssantos1229.workers.dev${CAMINHO}` },
+  { id: "geriz", rotulo: "Site real (geriz.com.br)", url: `https://geriz.com.br${CAMINHO}` },
+  { id: "delivery", rotulo: "Site real (delivery.geriz.com.br)", url: `https://delivery.geriz.com.br${CAMINHO}` },
 ];
 const HOSTS_PERMITIDOS = new Set(ENDERECOS.map((e) => new URL(e.url).host).concat(["www.geriz.com.br"]));
 
 process.env.GERIZ_PDV_VERSAO = app.getVersion();
-// Mesmo lugar de dados de antes da troca de nome (impressora escolhida e login continuam).
-app.setPath("userData", path.join(app.getPath("appData"), "GERIZ PDV"));
+process.env.GERIZ_PDV_MODO = MODO;
+// Frente de Caixa: mesmo lugar de dados de antes da troca de nome (impressora e
+// login continuam). Painel: lugar próprio, para os dois abrirem juntos.
+app.setPath("userData", path.join(app.getPath("appData"), PAINEL ? "GERIZ PDV Painel" : "GERIZ PDV"));
 
 // ---------- Configuração deste computador ----------
 const arquivoConfig = () => path.join(app.getPath("userData"), "config.json");
@@ -41,10 +56,15 @@ let config = {
   inicializado: false,
 };
 
-// Primeira vez neste computador: abre junto com o Windows e em tela cheia.
+// Primeira vez neste computador (só a Frente de Caixa): abre junto com o
+// Windows e em tela cheia. O painel abre em janela normal.
 function primeiraVez() {
   if (config.inicializado) return;
   config.inicializado = true;
+  if (PAINEL) {
+    salvarConfig();
+    return;
+  }
   config.telaCheia = true;
   try {
     app.setLoginItemSettings({ openAtLogin: true });
@@ -87,8 +107,8 @@ function criarJanela() {
     width: 1280,
     height: 800,
     show: false,
-    title: "GERIZ Frente de Caixa",
-    icon: path.join(__dirname, "build", "icon.png"),
+    title: NOME,
+    icon: path.join(__dirname, "build", PAINEL ? "icon-painel.png" : "icon.png"),
     backgroundColor: "#ffffff",
     // Menu escondido: aparece só ao apertar a tecla Alt (configurações do aplicativo).
     autoHideMenuBar: true,
@@ -103,7 +123,7 @@ function criarJanela() {
   });
   janela.maximize();
   janela.once("ready-to-show", () => janela.show());
-  // O nome da janela fica sempre "GERIZ Frente de Caixa" (não o título da página).
+  // O nome da janela fica sempre o do aplicativo (não o título da página).
   janela.on("page-title-updated", (e) => e.preventDefault());
 
   // Links de fora do GERIZ abrem no navegador normal.
@@ -207,7 +227,7 @@ function cupomDeTesteEscPos() {
     cortar: true,
     abrirGaveta: false,
     linhas: [
-      { texto: "GERIZ Frente de Caixa", alinhar: "centro", negrito: true, tamanho: "grande" },
+      { texto: NOME, alinhar: "centro", negrito: true, tamanho: "grande" },
       { texto: "Teste de impressão térmica", alinhar: "centro" },
       { separador: true },
       { texto: `Impressora: ${config.impressora || "padrão do Windows"}` },
@@ -266,7 +286,7 @@ async function montarMenu() {
         const r = termica
           ? await enviarCru(await impressoraEfetiva(), montarEscPos(cupomDeTesteEscPos()), app.getPath("userData"))
           : await imprimirHtml(cupomDeTeste());
-        if (!r.ok) dialog.showErrorBox("GERIZ Frente de Caixa", `Não foi possível imprimir o teste: ${r.erro}`);
+        if (!r.ok) dialog.showErrorBox(NOME, `Não foi possível imprimir o teste: ${r.erro}`);
       },
     },
     { type: "separator" },
@@ -299,14 +319,14 @@ async function montarMenu() {
       label: "Abrir a gaveta agora",
       click: async () => {
         const r = await enviarCru(await impressoraEfetiva(), soGaveta(), app.getPath("userData"));
-        if (!r.ok) dialog.showErrorBox("GERIZ Frente de Caixa", `Não foi possível abrir a gaveta: ${r.erro}`);
+        if (!r.ok) dialog.showErrorBox(NOME, `Não foi possível abrir a gaveta: ${r.erro}`);
       },
     },
   ];
 
   const molde = [
     {
-      label: "GERIZ Frente de Caixa",
+      label: NOME,
       submenu: [
         { label: "Recarregar", accelerator: "Ctrl+R", click: () => janela && janela.webContents.reload() },
         {
@@ -339,10 +359,10 @@ async function montarMenu() {
               .checkForUpdates()
               .then((r) => {
                 if (!r || !r.updateInfo || r.updateInfo.version === app.getVersion()) {
-                  void dialog.showMessageBox({ type: "info", title: "GERIZ Frente de Caixa", message: `Você já está na versão mais nova (${app.getVersion()}).` });
+                  void dialog.showMessageBox({ type: "info", title: NOME, message: `Você já está na versão mais nova (${app.getVersion()}).` });
                 }
               })
-              .catch(() => dialog.showErrorBox("GERIZ Frente de Caixa", "Não foi possível procurar atualização agora."));
+              .catch(() => dialog.showErrorBox(NOME, "Não foi possível procurar atualização agora."));
           },
         },
         { type: "separator" },
@@ -372,8 +392,8 @@ async function montarMenu() {
           click: () =>
             dialog.showMessageBox({
               type: "info",
-              title: "GERIZ Frente de Caixa",
-              message: `GERIZ Frente de Caixa ${app.getVersion()}`,
+              title: NOME,
+              message: `${NOME} ${app.getVersion()}`,
               detail: `Endereço: ${enderecoAtual().rotulo}\nImpressora: ${config.impressora || "padrão do Windows"}`,
             }),
         },
@@ -386,6 +406,11 @@ async function montarMenu() {
 // ---------- Atualização automática ----------
 function iniciarAtualizacoes() {
   if (!autoUpdater || !app.isPackaged) return;
+  // O painel lê "painel.yml" na Release; a Frente de Caixa, "latest.yml".
+  if (PAINEL) {
+    autoUpdater.channel = "painel";
+    autoUpdater.allowDowngrade = false;
+  }
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
   autoUpdater.on("error", () => {
@@ -394,8 +419,8 @@ function iniciarAtualizacoes() {
   autoUpdater.on("update-downloaded", async (info) => {
     const r = await dialog.showMessageBox({
       type: "info",
-      title: "GERIZ Frente de Caixa",
-      message: `Versão nova do GERIZ Frente de Caixa pronta (${info.version}).`,
+      title: NOME,
+      message: `Versão nova do ${NOME} pronta (${info.version}).`,
       detail: "Reiniciar agora para atualizar? Se preferir, ela entra sozinha da próxima vez que o aplicativo abrir.",
       buttons: ["Reiniciar agora", "Depois"],
       defaultId: 1,

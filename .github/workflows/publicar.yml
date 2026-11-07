@@ -1,5 +1,7 @@
-# Gera o instalador do GERIZ PDV para Windows e publica nas Releases deste
-# repositório (link fixo para baixar + atualização automática do aplicativo).
+# Gera os DOIS instaladores do GERIZ para Windows e publica nas Releases deste
+# repositório (link fixo para baixar + atualização automática):
+# - GERIZ-Frente-de-Caixa-Setup.exe  (atualização: latest.yml)
+# - GERIZ-PDV-Setup.exe              (atualização: painel.yml)
 # Publica quando a versão do package.json muda (push na main) ou manualmente.
 name: Publicar GERIZ PDV (Windows)
 
@@ -14,7 +16,7 @@ permissions:
 jobs:
   publicar:
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
 
@@ -36,9 +38,38 @@ jobs:
         if: steps.versao.outputs.existe == 'nao'
         run: npm install --no-audit --no-fund
 
-      - name: Gerar e publicar o instalador
+      - name: Gerar o instalador da Frente de Caixa
         if: steps.versao.outputs.existe == 'nao'
-        run: npm run publicar
+        run: npm run instalador
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+
+      - name: Gerar o instalador do GERIZ PDV (painel)
+        if: steps.versao.outputs.existe == 'nao'
+        run: npm run instalador:painel
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+
+      - name: Conferir os arquivos e publicar a Release
+        if: steps.versao.outputs.existe == 'nao'
+        shell: bash
+        run: |
+          set -e
+          v="${{ steps.versao.outputs.versao }}"
+          ls -la dist dist-painel
+          # O arquivo de atualização do painel tem de se chamar painel.yml.
+          if [ ! -f dist-painel/painel.yml ] && [ -f dist-painel/latest.yml ]; then
+            cp dist-painel/latest.yml dist-painel/painel.yml
+          fi
+          for f in dist/GERIZ-Frente-de-Caixa-Setup.exe dist/GERIZ-Frente-de-Caixa-Setup.exe.blockmap dist/latest.yml \
+                   dist-painel/GERIZ-PDV-Setup.exe dist-painel/GERIZ-PDV-Setup.exe.blockmap dist-painel/painel.yml; do
+            [ -f "$f" ] || { echo "Faltou o arquivo $f"; exit 1; }
+          done
+          grep -q "GERIZ-Frente-de-Caixa-Setup.exe" dist/latest.yml
+          grep -q "GERIZ-PDV-Setup.exe" dist-painel/painel.yml
+          gh release create "v$v" --title "GERIZ PDV $v" \
+            --notes "GERIZ Frente de Caixa e GERIZ PDV (painel do administrador) $v para Windows." \
+            dist/GERIZ-Frente-de-Caixa-Setup.exe dist/GERIZ-Frente-de-Caixa-Setup.exe.blockmap dist/latest.yml \
+            dist-painel/GERIZ-PDV-Setup.exe dist-painel/GERIZ-PDV-Setup.exe.blockmap dist-painel/painel.yml
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_IDENTITY_AUTO_DISCOVERY: "false"
