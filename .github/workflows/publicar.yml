@@ -1,0 +1,44 @@
+# Gera o instalador do GERIZ PDV para Windows e publica nas Releases deste
+# repositório (link fixo para baixar + atualização automática do aplicativo).
+# Publica quando a versão do package.json muda (push na main) ou manualmente.
+name: Publicar GERIZ PDV (Windows)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publicar:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Versão já publicada?
+        id: versao
+        shell: bash
+        run: |
+          v=$(node -p "require('./package.json').version")
+          echo "versao=$v" >> "$GITHUB_OUTPUT"
+          if gh release view "v$v" >/dev/null 2>&1; then echo "existe=sim" >> "$GITHUB_OUTPUT"; else echo "existe=nao" >> "$GITHUB_OUTPUT"; fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Instalar dependências
+        if: steps.versao.outputs.existe == 'nao'
+        run: npm install --no-audit --no-fund
+
+      - name: Gerar e publicar o instalador
+        if: steps.versao.outputs.existe == 'nao'
+        run: npm run publicar
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
