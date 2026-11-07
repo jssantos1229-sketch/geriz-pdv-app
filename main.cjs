@@ -85,7 +85,7 @@ function criarJanela() {
     width: 1280,
     height: 800,
     show: false,
-    title: "GERIZ PDV",
+    title: "GERIZ Frente de Caixa",
     icon: path.join(__dirname, "build", "icon.png"),
     backgroundColor: "#ffffff",
     // Menu escondido: aparece só ao apertar a tecla Alt (configurações do aplicativo).
@@ -101,6 +101,8 @@ function criarJanela() {
   });
   janela.maximize();
   janela.once("ready-to-show", () => janela.show());
+  // O nome da janela fica sempre "GERIZ Frente de Caixa" (não o título da página).
+  janela.on("page-title-updated", (e) => e.preventDefault());
 
   // Links de fora do GERIZ abrem no navegador normal.
   janela.webContents.setWindowOpenHandler(({ url }) => {

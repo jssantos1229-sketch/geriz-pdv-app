@@ -1,6 +1,6 @@
 # GERIZ PDV para Windows
 
-Aplicativo do caixa do **GERIZ PDV** (uma solução GERIZ, desenvolvida por Salusti Company).
+Aplicativo **GERIZ Frente de Caixa** (GERIZ PDV) (uma solução GERIZ, desenvolvida por Salusti Company).
 
 - Abre a Frente de Caixa do GERIZ (o mesmo sistema, login e dados do site).
 - Imprime o cupom **direto na impressora térmica** (ESC/POS: corte do papel e gaveta), sem a janela "Imprimir".
