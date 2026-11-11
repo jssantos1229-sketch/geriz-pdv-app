@@ -35,6 +35,18 @@ function montarEscPos(cupom) {
   const b = [ESC, 0x40, ESC, 0x74, 2]; // inicia + página PC850
   if (cupom.abrirGaveta) b.push(ESC, 0x70, 0, 25, 250); // gaveta (pino 2)
   for (const l of cupom.linhas || []) {
+    // Código de barras CODE128 feito pela própria impressora (ex.: papel da
+    // venda em espera: o caixa bipa e a compra volta).
+    if (l && typeof l.codigoBarras === "string" && /^[\x20-\x7e]{1,40}$/.test(l.codigoBarras)) {
+      const dados = codificar(`{B${l.codigoBarras}`);
+      b.push(ESC, 0x61, 1); // centro
+      b.push(GS, 0x68, 80); // altura
+      b.push(GS, 0x77, 2); // largura das barras
+      b.push(GS, 0x48, 2); // texto embaixo
+      b.push(GS, 0x66, 0); // fonte do texto
+      b.push(GS, 0x6b, 73, dados.length, ...dados, 0x0a);
+      continue;
+    }
     if (l && l.separador) {
       b.push(ESC, 0x61, 0, ...codificar("-".repeat(colunas)), 0x0a);
       continue;
