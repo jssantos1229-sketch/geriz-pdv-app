@@ -33,10 +33,24 @@ const CAMINHO = PAINEL ? "/pdv" : "/pdv/caixa";
 
 const ENDERECOS = [
   { id: "homologacao", rotulo: "Homologação do PDV (testes)", url: `https://homologacao-pdv-geriz-delivery.jssantos1229.workers.dev${CAMINHO}` },
-  { id: "geriz", rotulo: "Site real (geriz.com.br)", url: `https://geriz.com.br${CAMINHO}` },
+  // Site real: endereço próprio de cada app (pdv.geriz.com.br / caixa.geriz.com.br),
+  // cada um com o próprio login. O id "geriz" continua o mesmo: quem já usava o
+  // "Site real" passa para o endereço novo sozinho.
+  {
+    id: "geriz",
+    rotulo: PAINEL ? "Site real (pdv.geriz.com.br)" : "Site real (caixa.geriz.com.br)",
+    url: `https://${PAINEL ? "pdv" : "caixa"}.geriz.com.br${CAMINHO}`,
+  },
   { id: "delivery", rotulo: "Site real (delivery.geriz.com.br)", url: `https://delivery.geriz.com.br${CAMINHO}` },
 ];
-const HOSTS_PERMITIDOS = new Set(ENDERECOS.map((e) => new URL(e.url).host).concat(["www.geriz.com.br"]));
+const HOSTS_PERMITIDOS = new Set(
+  ENDERECOS.map((e) => new URL(e.url).host).concat([
+    "geriz.com.br",
+    "www.geriz.com.br",
+    "pdv.geriz.com.br",
+    "caixa.geriz.com.br",
+  ]),
+);
 
 process.env.GERIZ_PDV_VERSAO = app.getVersion();
 process.env.GERIZ_PDV_MODO = MODO;
